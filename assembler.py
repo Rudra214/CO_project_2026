@@ -50,3 +50,50 @@ if __name__ == "__main__":
         labels, instrs = pass_one(sys.argv[1])
         if labels is not None:
             print(f"First Pass complete. Found {len(labels)} labels.")
+
+
+
+#now we will start with the r-type encoding
+
+def encode_rtype(instruction, rd, rs1, rs2):
+	info = instructions [instruction]
+
+	funct7 = info["f7"]
+	funct3 = info["f3"]
+	opcode = info["opcode"]
+
+	rd_binary = registers[rd]
+	rs1_binary = registers[rs1]
+	rs2_binary = registers[rs2]
+
+	binary = funct7 + rs2_binary + rs1_binary + funct3 + rd_binary + opcode
+
+	return binary
+
+#test
+if __name__ == "__main__":
+	result = encode_rtype("add", "s1", "s2", "s3")
+	print("add s1, s2, s3 =", result)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
