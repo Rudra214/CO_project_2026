@@ -76,6 +76,55 @@ if __name__ == "__main__":
 	print("add s1, s2, s3 =", result)
 
 
+#below is the implementation of i-type encoding
+
+def encode_itype(name, operands, instructions, registers):
+	
+	#checking if the instruction name is present in instruction mapping
+	if name not in instructions:
+		return f"Error: unknown instruction '{name}'"
+
+	info = instruction[name]
+
+	#I-type need 3 operands: rd, rs1, imm
+	if len(operands) != 3:
+		return f"Errror: '{name}' needs 3 operands "
+
+	try:
+
+		rd = registers[operands[0]]
+
+		#here use rd, offset(rs1)
+		if name in ["lw", "jalr"]:
+			imm_val = int(operands[1])
+			rs1 = registers[operands[2]]
+
+		#for addi, sltiu, etc use rd,rs1,imm
+		else:
+			rs1 = registers[operands[1]]
+			imm_val = int(operands[2])
+
+		
+		#checking for immediate range 
+		if 2047 < imm < -2048:
+			return "Error: immediate out of range"
+
+		imm = to_bin(imm_val,12)
+
+		binarycode = imm + rs1 + info["f3"] + rd + info["opcode"]
+
+		return binarycode
+
+	except ValueError:
+		return "Error: invalid immediate value"
+	except KeyError:
+		return "Error: invalid register"
+
+#test
+
+if __name__ == "__main__":
+
+	print("Error Tests")
 
 
 
