@@ -72,8 +72,9 @@ def encode_rtype(instruction, rd, rs1, rs2):
 
 #test
 if __name__ == "__main__":
-    result = encode_rtype("add", "s1", "s2", "s3")
-    print("add s1, s2, s3 =", result)
+	print("\nR-Type encoder test below")
+	result = encode_rtype("add", "s1", "s2", "s3")
+	print("add s1, s2, s3 =", result)
 
 
 #below is the implementation of i-type encoding
@@ -138,6 +139,26 @@ print("jalr ra, 0(zero) =", r2)
 print("\n HardGen Test")
 r3 = encode_itype("addi", ["t0", "t1", "-2048"], instructions, registers) # checks for maximum negative 12 bit value
 print("addi t0, t1, -2048 =", r3)
+
+#next is U- type instructions
+def encode_utype(instruction, rd, imm):
+	info = instructions[instruction]
+	opcode = info["opcode"] #looks up the opcode for the 2 diff instructions it can take --- lui or auipc
+
+	rd_binary = registers[rd] #register name is converted to 5 bit binary
+
+	imm_binary = format(imm, '020b')  #this takes the imm number and converts to binary padded with 0s to make it 20 sigits
+
+	binary = imm_binary + rd_binary + opcode
+
+	return binary
+
+#test
+
+print ("\nU-Type encoder test below")
+print ("lui s1, 100 =", encode_utype('lui', 's1', 100))
+
+
 
 
 
