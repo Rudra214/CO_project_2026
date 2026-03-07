@@ -223,7 +223,21 @@ r3 = encode_stype("sw", ["t1", "-2048", "sp"], instructions, registers)
 print("sw t1, -2048(sp) =", r3)
 
 
+#now we will start with j-type encoding
 
+def encode_jtype(instruction, rd, immediate):
+    information=instructions[instruction]
+    opcode=information["opcode"]
+    rd_binary=registers[rd]
+    imm=format(int(immediate)&0x1FFFFF, "021b")
+
+    imm_20=imm[0]
+    imm_10_1=imm[10:20]
+    imm_11=imm[9]
+    imm_19_12=imm[1:9]
+    
+    binary=imm_20+imm_10_1+imm_11+imm_19_12+rd_binary+opcode
+    return binary
 
 
 
