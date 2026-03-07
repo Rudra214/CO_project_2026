@@ -239,6 +239,22 @@ def encode_jtype(instruction, rd, immediate):
     binary=imm_20+imm_10_1+imm_11+imm_19_12+rd_binary+opcode
     return binary
 
+#code for b-type encoding
+def encode_btype(instruction, rd, rs1, rs2, immediate):
+	information=instructions[instruction]
+	opcode=information["opcode"]
+	f3=information["f3"]
+	bin_rs1=registers[rs1]
+	bin_rs2=registers[rs2]
+
+	imm=format(int(immediate) &  0x1FFF, '013B')
+	imm_12=imm[0]
+	imm_11=imm[1]
+	imm_10_5=imm[2:8]
+	imm_4_1=imm[4:12]
+	binary=imm_12+imm_10_5+bin_rs2+bin_rs1+f3+imm_4_1+imm_11+opcode
+	return binary
+	
 
 
 
