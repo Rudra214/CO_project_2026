@@ -166,4 +166,49 @@ def assemble(labels, code_lines, outfile):
             elif opname == "sw":
                 imm_val = int(args[1], 0)
                 result = s_type(opname, args[0], args[2], imm_val)
+            # branches
+            elif opname in ["beq", "bne", "blt", "bge", "bltu", "bgeu"]:
+                if args[2] in labels:
+                    offset = labels[args[2]] - addr
+                else:
+                    offset = int(args[2], 0)
+                result = b_type(opname, args[0], args[1], offset)
+            
+            # upper immediate
+            elif opname == "lui" or opname == "auipc":
+                imm_val = int(args[1], 0)
+                result = u_type(opname, args[0], imm_val)
+            
+            # jump and link
+            elif opname == "jal":
+                if args[1] in labels:
+                    offset = labels[args[1]] - addr
+                else:
+                    offset = int(args[1], 0)
+                result = j_type(opname, args[0], offset)
+            
+            # jump and link register
+            elif opname == "jalr":
+                if args[1] in registers:
+                    imm_val = int(args[2], 0)
+                    result = i_type(opname, args[0], args[1], imm_val)
+                else:
+                    imm_val = int(args[1], 0)
+                    result = i_type(opname, args[0], args[2], imm_val)
+            
+            else:
+                print("Error at line " + str(ln) + ": Unknown instruction " + opname)
+                sys.exit(1)
+            
+            machine_code.append(result)
+            
+        except Exception as err:
+            print("Error at line " + str(ln) + ": " + str(err))
+            sys.exit(1)
+    
+    # write output
+    f = open(outfile, 'w')
+    for code in machine_code:
+        f.write(code + "\n")
+    f.close()
             
