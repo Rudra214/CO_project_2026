@@ -26,3 +26,17 @@ def r_type(instr, rd, r1, r2):
     data = instructions[instr]
     out = data["f7"] + registers[r2] + registers[r1] + data["f3"] + registers[rd] + data["opcode"]
     return out
+
+def i_type(instr, rd, r1, imm):
+    data = instructions[instr]
+    imm_bits = convert_to_twos_complement(imm, 12)
+    out = imm_bits + registers[r1] + data["f3"] + registers[rd] + data["opcode"]
+    return out
+
+def s_type(instr, r2, r1, imm):
+    data = instructions[instr]
+    imm_bits = convert_to_twos_complement(imm, 12)
+    upper = imm_bits[:7]
+    lower = imm_bits[7:]
+    out = upper + registers[r2] + registers[r1] + data["f3"] + lower + data["opcode"]
+    return out
