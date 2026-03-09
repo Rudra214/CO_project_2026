@@ -226,32 +226,33 @@ print("sw t1, -2048(sp) =", r3)
 #now we will start with j-type encoding
 
 def encode_jtype(instruction, rd, immediate):
+
     information=instructions[instruction]
     opcode=information["opcode"]
-    rd_binary=registers[rd]
-    imm=format(int(immediate)&0x1FFFFF, "021b")
+    rd_binary=registers[rd] #here we convert the destination register name to its 5 bit binary value
+    imm=format(int(immediate) & 0x1FFFFE, "021b") #this converts immediate to a 21 bits string
 
     imm_20=imm[0]
     imm_10_1=imm[10:20]
     imm_11=imm[9]
     imm_19_12=imm[1:9]
     
-    binary=imm_20+imm_10_1+imm_11+imm_19_12+rd_binary+opcode
+    binary=imm_20+imm_10_1+imm_11+imm_19_12+rd_binary+opcode #this assembles the final 32 bit instruction
     return binary
 
 #code for b-type encoding
-def encode_btype(instruction, rd, rs1, rs2, immediate):
+def encode_btype(instruction, rs1, rs2, immediate):
 	information=instructions[instruction]
 	opcode=information["opcode"]
 	f3=information["f3"]
 	bin_rs1=registers[rs1]
 	bin_rs2=registers[rs2]
 
-	imm=format(int(immediate) &  0x1FFF, '013B')
+	imm=format(int(immediate) &  0x1FFF, '013b')
 	imm_12=imm[0]
 	imm_11=imm[1]
 	imm_10_5=imm[2:8]
-	imm_4_1=imm[4:12]
+	imm_4_1=imm[8:12]
 	binary=imm_12+imm_10_5+bin_rs2+bin_rs1+f3+imm_4_1+imm_11+opcode
 	return binary
 	
