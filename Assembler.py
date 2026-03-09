@@ -40,3 +40,13 @@ def s_type(instr, r2, r1, imm):
     lower = imm_bits[7:]
     out = upper + registers[r2] + registers[r1] + data["f3"] + lower + data["opcode"]
     return out
+    
+def b_type(instr, r1, r2, imm):
+    data = instructions[instr]
+    imm_bits = convert_to_twos_complement(imm, 13)
+    bit12 = imm_bits[0]
+    bit11 = imm_bits[1]
+    bits_10_5 = imm_bits[2:8]
+    bits_4_1 = imm_bits[8:12]
+    out = bit12 + bits_10_5 + registers[r2] + registers[r1] + data["f3"] + bits_4_1 + bit11 + data["opcode"]
+    return out
