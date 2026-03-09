@@ -50,3 +50,9 @@ def b_type(instr, r1, r2, imm):
     bits_4_1 = imm_bits[8:12]
     out = bit12 + bits_10_5 + registers[r2] + registers[r1] + data["f3"] + bits_4_1 + bit11 + data["opcode"]
     return out
+
+def u_type(instr, rd, imm):
+    data = instructions[instr]
+    imm_bits = convert_to_twos_complement(imm, 20)
+    out = imm_bits + registers[rd] + data["opcode"]
+    return out
