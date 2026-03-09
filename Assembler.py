@@ -56,3 +56,13 @@ def u_type(instr, rd, imm):
     imm_bits = convert_to_twos_complement(imm, 20)
     out = imm_bits + registers[rd] + data["opcode"]
     return out
+
+def j_type(instr, rd, imm):
+    data = instructions[instr]
+    imm_bits = convert_to_twos_complement(imm, 21)
+    bit20 = imm_bits[0]
+    bits_10_1 = imm_bits[10:20]
+    bit11 = imm_bits[9]
+    bits_19_12 = imm_bits[1:9]
+    out = bit20 + bits_10_1 + bit11 + bits_19_12 + registers[rd] + data["opcode"]
+    return out
