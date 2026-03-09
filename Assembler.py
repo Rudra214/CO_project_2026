@@ -211,4 +211,17 @@ def assemble(labels, code_lines, outfile):
     for code in machine_code:
         f.write(code + "\n")
     f.close()
+
+if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        print("Usage: python3 Assembler.py input.asm output.bin")
+        sys.exit(1)
+    
+    input_file = sys.argv[1]
+    output_file = sys.argv[2]
+    
+    label_table, instructions_list = first_pass(input_file)
+    
+    if label_table is not None:
+        assemble(label_table, instructions_list, output_file)
             
