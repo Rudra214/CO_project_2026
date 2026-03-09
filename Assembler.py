@@ -66,6 +66,7 @@ def j_type(instr, rd, imm):
     bits_19_12 = imm_bits[1:9]
     out = bit20 + bits_10_1 + bit11 + bits_19_12 + registers[rd] + data["opcode"]
     return out
+    
 def first_pass(filepath):
     labels = {}
     code_lines = []
@@ -127,3 +128,42 @@ def first_pass(filepath):
             return None, None
     
     return labels, code_lines
+
+def assemble(labels, code_lines, outfile):
+    machine_code = []
+    
+    for entry in code_lines:
+        addr = entry[0]
+        instr_text = entry[1]
+        ln = entry[2]
+        
+        # normalize
+        temp = instr_text.replace(',', ' ').replace('(', ' ').replace(')', ' ')
+        temp = temp.lower()
+        tokens = temp.split()
+        
+        opname = tokens[0]
+        args = tokens[1:]
+        
+        try:
+            result = None
+            
+            # R-type
+            if opname in ["add", "sub", "slt", "sltu", "xor", "sll", "srl", "or", "and"]:
+                result = r_type(opname, args[0], args[1], args[2])
+            
+            # I-type arithmetic
+            elif opname == "addi" or opname == "sltiu":
+                imm_val = int(args[2], 0)
+                result = i_type(opname, args[0], args[1], imm_val)
+            
+            # load word
+            elif opname == "lw":
+                imm_val = int(args[1], 0)
+                result = i_type(opname, args[0], args[2], imm_val)
+            
+            # store word
+            elif opname == "sw":
+                imm_val = int(args[1], 0)
+                result = s_type(opname, args[0], args[2], imm_val)
+            
