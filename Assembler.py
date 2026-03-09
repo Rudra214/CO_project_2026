@@ -240,6 +240,18 @@ def encode_jtype(instruction, rd, immediate):
     binary=imm_20+imm_10_1+imm_11+imm_19_12+rd_binary+opcode #this assembles the final 32 bit instruction
     return binary
 
+#test for j-type
+print("\nSimple jal test")
+r1=encode_jtype("jal", "ra", 8)
+print("jal ra, 8=", r1)
+
+print("\nErrorGen test j type")
+print(encode_jtype("jal", "x99", 8))
+print(encode_jtype("jal", "ra", 3))
+
+
+
+
 #code for b-type encoding
 def encode_btype(instruction, rs1, rs2, immediate):
 	information=instructions[instruction]
@@ -256,7 +268,19 @@ def encode_btype(instruction, rs1, rs2, immediate):
 	binary=imm_12+imm_10_5+bin_rs2+bin_rs1+f3+imm_4_1+imm_11+opcode
 	return binary
 	
+#tests for b type
 
+print("\nSimple beq test")
+r4=encode_btype("beq", "s1", "s2", 8)
+print("beq s1, s2, 8=", r4)
+
+print("\nErrorGen test b type")
+print(encode_btype("beq", "x99", "s2", 8))
+print (encode_btype("beq", "s1", "s2", 3))
+
+print("\nLarge imm test")
+r7=encode_btype("beq", "s1", "s2", 4094)
+print("beq s1,s2,4094=", r7)
 
 
 
