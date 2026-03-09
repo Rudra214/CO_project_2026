@@ -21,3 +21,8 @@ def check_virtual_halt(line):
         return val == 0
     except:
         return False
+
+def r_type(instr, rd, r1, r2):
+    data = instructions[instr]
+    out = data["f7"] + registers[r2] + registers[r1] + data["f3"] + registers[rd] + data["opcode"]
+    return out
