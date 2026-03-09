@@ -66,3 +66,64 @@ def j_type(instr, rd, imm):
     bits_19_12 = imm_bits[1:9]
     out = bit20 + bits_10_1 + bit11 + bits_19_12 + registers[rd] + data["opcode"]
     return out
+def first_pass(filepath):
+    labels = {}
+    code_lines = []
+    addr = 0
+    
+    try:
+        file = open(filepath, 'r')
+        all_lines = file.readlines()
+        file.close()
+    except:
+        print("Error: Could not find file " + filepath)
+        return None, None
+    
+    line_number = 0
+    for raw_line in all_lines:
+        line_number = line_number + 1
+        
+        # remove comments
+        if '#' in raw_line:
+            idx = raw_line.index('#')
+            raw_line = raw_line[:idx]
+        raw_line = raw_line.strip()
+        
+        if raw_line == '':
+            continue
+        
+        # handle labels
+        if ':' in raw_line:
+            colon_pos = raw_line.index(':')
+            lbl = raw_line[:colon_pos].strip()
+            raw_line = raw_line[colon_pos+1:].strip()
+            
+            if len(lbl) == 0 or not lbl[0].isalpha():
+                print("Error at line " + str(line_number) + ": Label '" + lbl + "' must start with a letter.")
+                return None, None
+            
+            labels[lbl] = addr
+        
+        if raw_line != '':
+            code_lines.append((addr, raw_line, line_number))
+            addr = addr + 4
+    
+    # verify halt exists
+    halt_found = False
+    for item in code_lines:
+        if check_virtual_halt(item[1]):
+            halt_found = True
+            break
+    
+    if not halt_found:
+        print("Error: Program must contain Virtual Halt (beq zero, zero, 0)")
+        return None, None
+    
+    # verify halt is last
+    if len(code_lines) > 0:
+        final_instr = code_lines[-1][1]
+        if not check_virtual_halt(final_instr):
+            print("Error: Virtual Halt must be the last instruction")
+            return None, None
+    
+    return labels, code_lines
