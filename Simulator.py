@@ -1,22 +1,20 @@
 
 import sys
 
-# ─── Memory Layout ────────────────────────────────────────────────────────────
 PROG_MEM_START  = 0x00000000
-PROG_MEM_END    = 0x000000FF   # 256 bytes, 64 x 32-bit instructions
+PROG_MEM_END    = 0x000000FF   
 
 STACK_MEM_START = 0x00000100
-STACK_MEM_END   = 0x0000017F   # 128 bytes, 32 x 32-bit words
+STACK_MEM_END   = 0x0000017F  
 STACK_INIT_SP   = 0x0000017C
 
 DATA_MEM_START  = 0x00010000
-DATA_MEM_END    = 0x0001007F   # 128 bytes, 32 x 32-bit words
+DATA_MEM_END    = 0x0001007F   
 
 WORD_MASK = 0xFFFFFFFF
 SIGN_BIT  = 0x80000000
 
-# ─── Helpers ──────────────────────────────────────────────────────────────────
-
+#helper function
 def to_signed32(val):
     val = val & WORD_MASK
     if val & SIGN_BIT:
@@ -45,26 +43,23 @@ def fmt_pc(val):
 def fmt_mem_addr(addr):
     return '0x' + format(addr, '08X')
 
-# ─── Simulator ────────────────────────────────────────────────────────────────
+# simulator
 
 class Simulator:
     def __init__(self):
-        # 32 registers; x0 always 0
+
         self.regs = [0] * 32
-        self.regs[2] = STACK_INIT_SP   # sp initialised
+        self.regs[2] = STACK_INIT_SP   
 
         self.pc = 0
 
-        # instruction memory: list of 32-bit ints indexed by (addr//4)
         self.imem = []
 
-        # data & stack memory: dict addr -> 32-bit int
         self.dmem = {}
 
-        self.trace_lines = []   # per-instruction register dump lines
+        self.trace_lines = [] 
         self.halted = False
 
-    # ── Load binary file ──────────────────────────────────────────────────────
     def load(self, filepath):
         try:
             with open(filepath, 'r') as f:
@@ -85,10 +80,8 @@ class Simulator:
         if rd != 0:
             self.regs[rd] = to_unsigned32(val)
 
-    # ── Memory read/write ─────────────────────────────────────────────────────
     def mem_read(self, addr):
         addr = addr & WORD_MASK
-        # align to word
         addr = addr & ~3
         return self.dmem.get(addr, 0)
 
@@ -97,7 +90,7 @@ class Simulator:
         addr = addr & ~3
         self.dmem[addr] = to_unsigned32(val)
 
-    # ── Decode helpers ────────────────────────────────────────────────────────
+    # Decode helpers 
     @staticmethod
     def bits(instr, hi, lo):
         mask = (1 << (hi - lo + 1)) - 1
@@ -113,7 +106,7 @@ class Simulator:
 
         pc_next = self.pc + 4   # default
 
-        # ── R-type: opcode 0110011 ──────────────────────────────────────────
+        #R-type: opcode 0110011
         if opcode == 0b0110011:
             a = to_signed32(self.regs[rs1])
             b = to_signed32(self.regs[rs2])
@@ -142,7 +135,7 @@ class Simulator:
             elif funct3 == 0b111:         # and
                 self.write_reg(rd, ua & ub)
 
-        # ── I-type arithmetic: opcode 0010011 ───────────────────────────────
+        #I-type arithmetic: opcode 0010011 
         elif opcode == 0b0010011:
             imm = sign_extend(self.bits(instr, 31, 20), 12)
             ua  = self.regs[rs1]
@@ -154,7 +147,7 @@ class Simulator:
                 uimm = imm & WORD_MASK
                 self.write_reg(rd, 1 if ua < uimm else 0)
 
-        # ── Load: opcode 0000011 ─────────────────────────────────────────────
+        # Load: opcode 0000011 
         elif opcode == 0b0000011:
             imm  = sign_extend(self.bits(instr, 31, 20), 12)
             addr = to_unsigned32(self.regs[rs1] + imm)
@@ -162,7 +155,7 @@ class Simulator:
                 val = self.mem_read(addr)
                 self.write_reg(rd, val)
 
-        # ── Store: opcode 0100011 ────────────────────────────────────────────
+        # Store: opcode 0100011 
         elif opcode == 0b0100011:
             imm_hi = self.bits(instr, 31, 25)
             imm_lo = self.bits(instr, 11, 7)
@@ -171,7 +164,7 @@ class Simulator:
             if funct3 == 0b010:           # sw
                 self.mem_write(addr, self.regs[rs2])
 
-        # ── Branch: opcode 1100011 ───────────────────────────────────────────
+        #Branch: opcode 1100011 
         elif opcode == 0b1100011:
             b12  = self.bits(instr, 31, 31)
             b10_5 = self.bits(instr, 30, 25)
@@ -196,17 +189,16 @@ class Simulator:
             # Virtual halt check: beq x0, x0, 0
             if funct3 == 0b000 and rs1 == 0 and rs2 == 0 and imm == 0:
                 self.halted = True
-                # pc stays
                 pc_next = self.pc
             elif taken:
                 pc_next = to_unsigned32(self.pc + imm)
 
-        # ── LUI: opcode 0110111 ──────────────────────────────────────────────
+        #LUI: opcode 0110111 
         elif opcode == 0b0110111:
             imm = self.bits(instr, 31, 12) << 12
             self.write_reg(rd, imm)
 
-        # ── AUIPC: opcode 0010111 ────────────────────────────────────────────
+        #AUIPC: opcode 0010111 
         elif opcode == 0b0010111:
             imm = self.bits(instr, 31, 12) << 12
             self.write_reg(rd, to_unsigned32(self.pc + imm))
