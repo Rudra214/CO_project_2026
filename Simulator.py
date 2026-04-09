@@ -81,5 +81,78 @@ class Simulator:
                 print(f"Error at line {i+1}: invalid instruction '{line}'")
                 sys.exit(1)
             self.imem.append(int(line, 2))
+    def write_reg(self, rd, val):
+        if rd != 0:
+            self.regs[rd] = to_unsigned32(val)
+
+    # ── Memory read/write ─────────────────────────────────────────────────────
+    def mem_read(self, addr):
+        addr = addr & WORD_MASK
+        # align to word
+        addr = addr & ~3
+        return self.dmem.get(addr, 0)
+
+    def mem_write(self, addr, val):
+        addr = addr & WORD_MASK
+        addr = addr & ~3
+        self.dmem[addr] = to_unsigned32(val)
+
+    # ── Decode helpers ────────────────────────────────────────────────────────
+    @staticmethod
+    def bits(instr, hi, lo):
+        mask = (1 << (hi - lo + 1)) - 1
+        return (instr >> lo) & mask
+
+    def decode_and_execute(self, instr):
+        opcode = self.bits(instr, 6, 0)
+        rd     = self.bits(instr, 11, 7)
+        funct3 = self.bits(instr, 14, 12)
+        rs1    = self.bits(instr, 19, 15)
+        rs2    = self.bits(instr, 24, 20)
+        funct7 = self.bits(instr, 31, 25)
+
+        pc_next = self.pc + 4   # default
+
+        # ── R-type: opcode 0110011 ──────────────────────────────────────────
+        if opcode == 0b0110011:
+            a = to_signed32(self.regs[rs1])
+            b = to_signed32(self.regs[rs2])
+            ua = self.regs[rs1]
+            ub = self.regs[rs2]
+
+            if funct3 == 0b000:
+                if funct7 == 0b0000000:   # add
+                    self.write_reg(rd, ua + ub)
+                elif funct7 == 0b0100000: # sub
+                    self.write_reg(rd, ua - ub)
+            elif funct3 == 0b001:         # sll
+                shamt = ub & 0x1F
+                self.write_reg(rd, ua << shamt)
+            elif funct3 == 0b010:         # slt
+                self.write_reg(rd, 1 if a < to_signed32(ub) else 0)
+            elif funct3 == 0b011:         # sltu
+                self.write_reg(rd, 1 if ua < ub else 0)
+            elif funct3 == 0b100:         # xor
+                self.write_reg(rd, ua ^ ub)
+            elif funct3 == 0b101:         # srl
+                shamt = ub & 0x1F
+                self.write_reg(rd, ua >> shamt)
+            elif funct3 == 0b110:         # or
+                self.write_reg(rd, ua | ub)
+            elif funct3 == 0b111:         # and
+                self.write_reg(rd, ua & ub)
+
+        # ── I-type arithmetic: opcode 0010011 ───────────────────────────────
+        elif opcode == 0b0010011:
+            imm = sign_extend(self.bits(instr, 31, 20), 12)
+            ua  = self.regs[rs1]
+            a   = to_signed32(ua)
+
+            if funct3 == 0b000:           # addi
+                self.write_reg(rd, a + imm)
+            elif funct3 == 0b011:         # sltiu  (unsigned compare)
+                uimm = imm & WORD_MASK
+                self.write_reg(rd, 1 if ua < uimm else 0)
+
 
     
