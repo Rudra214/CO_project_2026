@@ -154,5 +154,61 @@ class Simulator:
                 uimm = imm & WORD_MASK
                 self.write_reg(rd, 1 if ua < uimm else 0)
 
+        # ── Load: opcode 0000011 ─────────────────────────────────────────────
+        elif opcode == 0b0000011:
+            imm  = sign_extend(self.bits(instr, 31, 20), 12)
+            addr = to_unsigned32(self.regs[rs1] + imm)
+            if funct3 == 0b010:           # lw
+                val = self.mem_read(addr)
+                self.write_reg(rd, val)
+
+        # ── Store: opcode 0100011 ────────────────────────────────────────────
+        elif opcode == 0b0100011:
+            imm_hi = self.bits(instr, 31, 25)
+            imm_lo = self.bits(instr, 11, 7)
+            imm    = sign_extend((imm_hi << 5) | imm_lo, 12)
+            addr   = to_unsigned32(self.regs[rs1] + imm)
+            if funct3 == 0b010:           # sw
+                self.mem_write(addr, self.regs[rs2])
+
+        # ── Branch: opcode 1100011 ───────────────────────────────────────────
+        elif opcode == 0b1100011:
+            b12  = self.bits(instr, 31, 31)
+            b10_5 = self.bits(instr, 30, 25)
+            b4_1  = self.bits(instr, 11, 8)
+            b11   = self.bits(instr, 7, 7)
+            imm_raw = (b12 << 12) | (b11 << 11) | (b10_5 << 5) | (b4_1 << 1)
+            imm = sign_extend(imm_raw, 13)
+
+            a  = to_signed32(self.regs[rs1])
+            b  = to_signed32(self.regs[rs2])
+            ua = self.regs[rs1]
+            ub = self.regs[rs2]
+
+            taken = False
+            if funct3 == 0b000:   taken = (a == b)    # beq
+            elif funct3 == 0b001: taken = (a != b)    # bne
+            elif funct3 == 0b100: taken = (a < b)     # blt
+            elif funct3 == 0b101: taken = (a >= b)    # bge
+            elif funct3 == 0b110: taken = (ua < ub)   # bltu
+            elif funct3 == 0b111: taken = (ua >= ub)  # bgeu
+
+            # Virtual halt check: beq x0, x0, 0
+            if funct3 == 0b000 and rs1 == 0 and rs2 == 0 and imm == 0:
+                self.halted = True
+                # pc stays
+                pc_next = self.pc
+            elif taken:
+                pc_next = to_unsigned32(self.pc + imm)
+
+        # ── LUI: opcode 0110111 ──────────────────────────────────────────────
+        elif opcode == 0b0110111:
+            imm = self.bits(instr, 31, 12) << 12
+            self.write_reg(rd, imm)
+
+        # ── AUIPC: opcode 0010111 ────────────────────────────────────────────
+        elif opcode == 0b0010111:
+            imm = self.bits(instr, 31, 12) << 12
+            self.write_reg(rd, to_unsigned32(self.pc + imm))
 
     
