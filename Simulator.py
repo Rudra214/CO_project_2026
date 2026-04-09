@@ -82,35 +82,4 @@ class Simulator:
                 sys.exit(1)
             self.imem.append(int(line, 2))
 
-    # ── Register write (x0 stays 0) ───────────────────────────────────────────
-    def write_reg(self, rd, val):
-        if rd != 0:
-            self.regs[rd] = to_unsigned32(val)
-
-    # ── Memory read/write ─────────────────────────────────────────────────────
-    def mem_read(self, addr):
-        addr = addr & WORD_MASK
-        # align to word
-        addr = addr & ~3
-        return self.dmem.get(addr, 0)
-
-    def mem_write(self, addr, val):
-        addr = addr & WORD_MASK
-        addr = addr & ~3
-        self.dmem[addr] = to_unsigned32(val)
-
-    # ── Decode helpers ────────────────────────────────────────────────────────
-    @staticmethod
-    def bits(instr, hi, lo):
-        mask = (1 << (hi - lo + 1)) - 1
-        return (instr >> lo) & mask
-
-    def decode_and_execute(self, instr):
-        opcode = self.bits(instr, 6, 0)
-        rd     = self.bits(instr, 11, 7)
-        funct3 = self.bits(instr, 14, 12)
-        rs1    = self.bits(instr, 19, 15)
-        rs2    = self.bits(instr, 24, 20)
-        funct7 = self.bits(instr, 31, 25)
-
-        pc_next = self.pc + 4   # default
+    
